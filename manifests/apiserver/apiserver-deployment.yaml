@@ -1,0 +1,88 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    k8s-on-k8s: kube-apiserver
+  name: kube-apiserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-on-k8s: kube-apiserver
+  template:
+    metadata:
+      labels:
+        k8s-on-k8s: kube-apiserver
+    spec:
+      containers:
+      - command:
+        - /usr/bin/flock
+        - --exclusive
+        - --timeout=30
+        - /var/lock/api-server.lock
+        - /hyperkube
+        - apiserver
+        - --bind-address=0.0.0.0
+        - --secure-port=443
+        - --insecure-port=8080
+        - --advertise-address=0.0.0.0
+        - --etcd-servers=http://etcd0:2379
+        - --etcd-quorum-read=true
+        - --storage-backend=etcd3
+        - --allow-privileged=true
+        - --service-cluster-ip-range=10.3.0.0/16
+        - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+        - --tls-ca-file=/etc/kubernetes/secrets/ca.crt
+        - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
+        - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
+        - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
+        - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
+        - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
+        - --client-ca-file=/etc/kubernetes/secrets/ca.crt
+        - --authorization-mode=RBAC
+        - --anonymous-auth=false
+        - --cloud-provider=
+        - --audit-log-path=/var/log/kubernetes/kube-apiserver-audit.log
+        - --audit-log-maxage=30
+        - --audit-log-maxbackup=3
+        - --audit-log-maxsize=100
+        image: gcr.io/google_containers/hyperkube:v1.7.2
+        imagePullPolicy: IfNotPresent
+        name: kube-apiserver
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/ssl/certs
+          name: ssl-certs-host
+          readOnly: true
+        - mountPath: /etc/kubernetes/secrets
+          name: secrets
+          readOnly: true
+        - mountPath: /var/lock
+          name: var-lock
+        - mountPath: /var/log/kubernetes
+          name: var-log-kubernetes
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /usr/share/ca-certificates
+        name: ssl-certs-host
+      - name: var-lock
+        emptyDir: {}
+        name: var-lock
+      - name: var-log-kubernetes
+        emptyDir: {}
+      - name: secrets
+        secret:
+          defaultMode: 420
+          secretName: kube-apiserver
