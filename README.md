@@ -8,7 +8,7 @@ Theory of operation
 --------------
 
 A _master_ or _infrastructure_ cluster provides control plane as a service to multiple
-cluster administrators by granting each of them writable access to a namespace.
+cluster administrators by granting each of them a writable access to a namespace.
 
 The control plane is provisioned in that namespace just like any common containerized
 application using deployments, services and ingress native objects.
@@ -29,9 +29,18 @@ by a single etcd member and a kubeconfig file with admin privileges.
 
 Short term TODO:
 * Add KCM/Scheduler to control plane assets
-* Connect a remote kubelet/kube-proxy
+* Connect remote kubelet/kube-proxy
 * Add kube-dns
 * Find a way to make in-cluster client use the API server
+* Use flannel for CNI
+
+Longer term TODO:
+* Operator driven deployment
+* Store TLS assets as encrypted secrets (requires 1.7 infra cluster)
+* Use CoreOS etcd operator
+* Add mini ELK stack to visualize control place logs
+* Bridge authn/authz to external source
+* Test with Cilium
 
 
 Requirements
