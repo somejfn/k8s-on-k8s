@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/ssl-passthrough: "true"
+    kubernetes.io/ingress.class: tectonic
+  name: k8s-on-k8s
+spec:
+  rules:
+  - host: kubernetes.foo-bar.com
+    http:
+      paths:
+      - backend:
+          serviceName: apiserver
+          servicePort: 443
+  tls:
+  - hosts:
+    - kubernetes.foo-bar.com
