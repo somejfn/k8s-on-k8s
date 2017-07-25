@@ -46,7 +46,8 @@ must resolve and get to the infrastructure cluster ingress controller
 (can be as easy as a CNAME to that ingress controller or an A record to its IP)
 
 
-```$ ./deploy.sh -h kubernetes.foo-bar.com -n namespaceX
+```
+$ ./deploy.sh -h kubernetes.foo-bar.com -n namespaceX
 CHECK: Access to cluster confirmed
 CHECK: API server host kubernetes.foo-bar.com resolves
 2017/07/25 08:31:46 [INFO] generating a new CA key and certificate from CSR
