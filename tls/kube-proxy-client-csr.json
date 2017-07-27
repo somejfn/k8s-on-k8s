@@ -1,0 +1,17 @@
+{
+  "CN": "system:node-proxier",
+  "hosts": [""],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Portland",
+      "O": "system:kube-proxy",
+      "OU": "Proxy",
+      "ST": "Oregon"
+    }
+  ]
+}

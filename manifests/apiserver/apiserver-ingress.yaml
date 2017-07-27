@@ -7,7 +7,7 @@ metadata:
   name: k8s-on-k8s
 spec:
   rules:
-  - host: kubernetes.foo-bar.com
+  - host: testjfn.k8s.cloudsys.tmcs
     http:
       paths:
       - backend:
@@ -15,4 +15,4 @@ spec:
           servicePort: 443
   tls:
   - hosts:
-    - kubernetes.foo-bar.com
+    - testjfn.k8s.cloudsys.tmcs

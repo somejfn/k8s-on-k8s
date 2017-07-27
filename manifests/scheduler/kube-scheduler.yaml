@@ -1,0 +1,58 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: kube-scheduler
+  labels:
+    k8s-on-k8s: kube-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-on-k8s: kube-scheduler
+  template:
+    metadata:
+      labels:
+        k8s-on-k8s: kube-scheduler
+    spec:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsUser: 65534
+        runAsNonRoot: true
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: kube-scheduler
+          command:
+            - ./hyperkube
+            - scheduler
+            - '--kubeconfig=/etc/kubernetes/secrets/kubeconfig'
+            - '--leader-elect=true'
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 10251
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: secrets
+              readOnly: true
+              mountPath: /etc/kubernetes/secrets
+            - name: ssl-host
+              readOnly: true
+              mountPath: /etc/ssl/certs
+          terminationMessagePolicy: File
+          image: gcr.io/google_containers/hyperkube:v1.7.2
+      volumes:
+        - name: secrets
+          secret:
+            secretName: kube-scheduler
+            defaultMode: 420
+        - name: ssl-host
+          hostPath:
+            path: /usr/share/ca-certificates

@@ -1,0 +1,21 @@
+{
+  "CN": "kube-apiserver",
+  "hosts": [
+    "127.0.0.1",
+    "kubernetes",
+    "testjfn.k8s.cloudsys.tmcs"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Portland",
+      "O": "Kubernetes",
+      "OU": "API Server",
+      "ST": "Oregon"
+    }
+  ]
+}

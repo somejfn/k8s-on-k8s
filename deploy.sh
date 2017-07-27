@@ -53,7 +53,7 @@ cd ./tls
 
 
 # Creating K8s secrets in infra cluster
-for i in apiserver-secret.yaml apiserver-admin-secret.yaml ; do
+for i in apiserver-secret.yaml apiserver-admin-secret.yaml controller-manager-secret.yaml scheduler-secret.yaml ; do
    $(which kubectl) -n ${NAMESPACE} create -f $i
 done
 
@@ -61,7 +61,8 @@ done
 cd ../manifests
 $(which kubectl) -n ${NAMESPACE} create -f etcd/
 $(which kubectl) -n ${NAMESPACE} create -f apiserver/
-
+$(which kubectl) -n ${NAMESPACE} create -f kcm/
+$(which kubectl) -n ${NAMESPACE} create -f scheduler/
 # Check we can connect !
 cd ../
 echo "Giving a few seconds for the API server to start..."
