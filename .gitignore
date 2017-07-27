@@ -1,0 +1,7 @@
+kubeconfig*
+*.pem
+*.csr
+tls/apiserver-admin-secret.yaml
+tls/apiserver-secret.yaml
+tls/controller-manager-secret.yaml
+tls/scheduler-secret.yaml

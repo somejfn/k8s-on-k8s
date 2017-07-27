@@ -28,7 +28,7 @@ by a single etcd member and a kubeconfig file with admin privileges.
 
 
 Short term TODO:
-* Add KCM/Scheduler to control plane assets
+* ~~Add KCM/Scheduler to control plane assets~~
 * Connect remote kubelet/kube-proxy
 * Add kube-dns
 * Find a way to make in-cluster client use the API server
