@@ -112,7 +112,7 @@ I.e. on a CoreOS instance:
 ```
 # mkdir /etc/kubernetes/tls -p
 
---> Upload kubelet-client.pem and ca.pem files under /etc/kubernetes/tls
+--> Upload kubeconfig-kubelets and ca.pem files under /etc/kubernetes/tls
 
 MYIP=$(ip route list scope global | awk '{print $9}')
 cat <<EOF>/etc/systemd/system/kubelet.service
