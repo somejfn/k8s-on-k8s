@@ -126,7 +126,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid --dns=host"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --require-kubeconfig \
-  --kubeconfig /etc/kubernetes/tls/kubelet-client.pem \
+  --kubeconfig /etc/kubernetes/tls/kubeconfig-kubelets \
   --hostname-override=${MYIP}
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
 EOF
@@ -134,7 +134,6 @@ EOF
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl restart kubelet
-
 ```
 
 
