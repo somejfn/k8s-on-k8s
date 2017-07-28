@@ -63,8 +63,21 @@ $(which kubectl) -n ${NAMESPACE} create -f etcd/
 $(which kubectl) -n ${NAMESPACE} create -f apiserver/
 $(which kubectl) -n ${NAMESPACE} create -f kcm/
 $(which kubectl) -n ${NAMESPACE} create -f scheduler/
+
 # Check we can connect !
 cd ../
 echo "Giving a few seconds for the API server to start..."
-sleep 15
-$(which kubectl) version --kubeconfig=tls/kubeconfig
+sleep 5
+echo "Trying to connect to the hosted control plane..."
+for ((i = 0 ; i < 15 ; i++ )); do
+  $(which kubectl) version --kubeconfig=tls/kubeconfig 1>/dev/null 2>/dev/null
+  RES=$?
+  if [ $RES -eq 0 ]; then
+      echo "AVAILABLE !" ;
+      $(which kubectl) version --kubeconfig=tls/kubeconfig
+      break
+  fi
+  echo -n .
+  sleep 2
+  [[ $i -eq 15 ]] && echo "Timed out..." && exit 1
+done
