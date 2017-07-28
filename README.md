@@ -26,7 +26,7 @@ Current state
 Just a WIP... a lot remains to be done.  For now you get:
 * A single etcd member with no persistence (until setup with operator)  
 * A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
-* A kubeconfig files for the cluster admin and kubelets      
+* Kubeconfig files for the hosted cluster administrator and to connect kubelets
 
 
 Short term TODO:
@@ -40,7 +40,7 @@ Longer term TODO:
 * Operator driven deployment
 * Store TLS assets as encrypted secrets (requires 1.7 infra cluster)
 * Use CoreOS etcd operator
-* Add mini ELK stack to visualize control place logs
+* Add mini ELK stack to visualize control plane logs
 * Bridge authn/authz to external source
 * Test with Cilium
 
