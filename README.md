@@ -23,8 +23,10 @@ control plane and an operator will do the heavy lifting.
 
 Current state
 --------------
-Just a WIP... a lot remain to be done.  For now you get a control plane backed
-by a single etcd member and a kubeconfig file with admin privileges.      
+Just a WIP... a lot remains to be done.  For now you get:
+* A single etcd member with no persistence (until setup with operator)  
+* A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
+* A kubeconfig files for the cluster admin and kubelets      
 
 
 Short term TODO:
@@ -43,14 +45,19 @@ Longer term TODO:
 * Test with Cilium
 
 
-Requirements
+Local Requirements
 --------------
 * cfssl
-* kubectl
-* Access to a writable namespace on the infra cluster
+* kubectl setup with the infrastructure cluster context
 
 
-Usage
+K8s Infrastructure Requirements
+--------------
+* Access to a writable namespace
+* A functionnal ingress controller on the infra cluster
+
+
+Creating the hosted control plane
 --------------
 Specify the desired API URL hostname that must resolve and route to the infrastructure
 cluster's ingress controller. This could be as a CNAME to the ingress controller
@@ -97,7 +104,41 @@ Server Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.2", GitCommi
 ```
 
 
-Clean up
+Connecting a kubelet manually
+--------------
+
+I.e. on a CoreOS instance:
+
+```
+# mkdir /etc/kubernetes/tls -p
+
+--> Upload kubelet-client.pem and ca.pem files under /etc/kubernetes/tls
+
+MYIP=$(ip route list scope global | awk '{print $9}')
+cat <<EOF>/etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes node agent
+[Install]
+WantedBy=multi-user.target
+[Service]
+Environment=KUBELET_IMAGE_TAG=v1.7.2_coreos.0
+Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid --dns=host"
+ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
+ExecStart=/usr/lib/coreos/kubelet-wrapper \
+  --require-kubeconfig \
+  --kubeconfig /etc/kubernetes/tls/kubelet-client.pem \
+  --hostname-override=${MYIP}
+ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
+EOF
+
+systemctl daemon-reload
+systemctl enable kubelet
+systemctl restart kubelet
+
+```
+
+
+Delete hosted k8s resources
 --------------
 ```
 kubectl -n namespaceX delete deployment,svc,secrets,ingress --all

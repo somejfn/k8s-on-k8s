@@ -201,3 +201,24 @@ data:
   kubeconfig: $(cat kubeconfig-scheduler | base64 | tr -d '\n')
 type: Opaque
 EOF
+
+
+# Gen kubeconfig file for the kubelets
+cat <<EOF> kubeconfig-kubelets
+apiVersion: v1
+kind: Config
+clusters:
+- name: local
+  cluster:
+    server: https://${APIURL}
+    certificate-authority-data: $(cat ca.pem | base64 | tr -d '\n')
+users:
+- name: admin
+  user:
+    client-certificate-data: $(cat kubelet-client.pem | base64 | tr -d '\n')
+    client-key-data: $(cat kubelet-client-key.pem | base64 | tr -d '\n')
+contexts:
+- context:
+    cluster: local
+    user: admin
+EOF

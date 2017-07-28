@@ -27,6 +27,7 @@ spec:
             - ./hyperkube
             - controller-manager
             - '--kubeconfig=/etc/kubernetes/secrets/kubeconfig'
+            - '--use-service-account-credentials'
             - '--allocate-node-cidrs=true'
             - '--configure-cloud-routes=false'
             - '--cluster-cidr=10.2.0.0/16'
