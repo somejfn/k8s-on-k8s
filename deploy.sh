@@ -84,4 +84,8 @@ done
 
 
 # Store kubeconfig as a secret for kube-proxy
-kubectl --kubeconfig=tls/kubeconfig create secret generic  kubeconfig-proxy -n kube-system --from-file tls/kubeconfig-proxy
+echo "Deploying child cluster assets"
+kubectl --kubeconfig=tls/kubeconfig -n kube-system create secret generic  kubeconfig-proxy  --from-file tls/kubeconfig-proxy
+kubectl --kubeconfig=tls/kubeconfig -n kube-system apply -f manifests/on-k8s/kube-proxy/
+kubectl --kubeconfig=tls/kubeconfig -n kube-system apply -f manifests/on-k8s/kube-flannel/
+kubectl --kubeconfig=tls/kubeconfig -n kube-system apply -f manifests/on-k8s/kube-dns/

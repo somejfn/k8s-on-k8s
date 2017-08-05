@@ -20,28 +20,27 @@ infrastructure cluster.
 A basic script creates the control plane for now but later a CRD will define the desired
 control plane and an operator will do the heavy lifting.
 
+![In a picture](docs/k8sonk8s.png)
+
 
 Current state
 --------------
-Just a WIP... a lot remains to be done.  For now you get:
+It's a WIP... a lot remains to be done.  For now you get:
 * A single etcd member with no persistence (until setup with operator)  
 * A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
 * Kubeconfig files for the hosted cluster administrator and to connect kubelets
 * Flannel and kube-proxy daemon-sets on workers
 * Kube-dns on the first worker joining the cluster
 
+Also note this _10.199.199.199_ IP advertised in the API server manifest and setup
+locally on each worker's loopback interface as show below.  This is a work around for in-cluster
+clients using the built-in kubernetes service to reach the API server (such as kube-flannel
+and kube-dns PODs) via a nodePort service.      
 
-Short term TODO:
-* ~~Add KCM/Scheduler to control plane assets~~
-* ~~Connect remote kubelet/kube-proxy~~
-* ~~Add kube-dns~~
-* ~~Find a way to make in-cluster client use the API server~~
-* ~~Use flannel for CNI~~
-
-Longer term TODO:
-* Operator driven deployment
+TODO:
+* Replace script  by an operator and TPRs/CRDs
 * Store TLS assets as encrypted secrets (requires 1.7 infra cluster)
-* Use CoreOS etcd operator
+* Use CoreOS etcd operator with persistent volumes
 * Add mini ELK stack to visualize control plane logs
 * Bridge authn/authz to external source
 * Test with Cilium
