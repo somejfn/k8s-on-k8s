@@ -1,5 +1,5 @@
 {
-  "CN": "system:node-proxier",
+  "CN": "system:kube-proxy",
   "hosts": [""],
   "key": {
     "algo": "rsa",

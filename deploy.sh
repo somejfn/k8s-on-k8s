@@ -81,3 +81,7 @@ for ((i = 0 ; i < 15 ; i++ )); do
   sleep 2
   [[ $i -eq 15 ]] && echo "Timed out..." && exit 1
 done
+
+
+# Store kubeconfig as a secret for kube-proxy
+kubectl --kubeconfig=tls/kubeconfig create secret generic  kubeconfig-proxy -n kube-system --from-file tls/kubeconfig-proxy

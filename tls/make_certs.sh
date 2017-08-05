@@ -14,6 +14,7 @@ cat <<EOF> kube-apiserver-server-csr.json
   "CN": "kube-apiserver",
   "hosts": [
     "127.0.0.1",
+    "10.3.0.1",
     "kubernetes",
     "${APIHOST}"
   ],
@@ -221,4 +222,25 @@ contexts:
 - context:
     cluster: local
     user: admin
+EOF
+
+
+# Gen kubeconfig file for proxy
+cat <<EOF> kubeconfig-proxy
+apiVersion: v1
+kind: Config
+clusters:
+- name: local
+  cluster:
+    server: https://${APIURL}
+    certificate-authority-data: $(cat ca.pem | base64 | tr -d '\n')
+users:
+- name: proxy
+  user:
+    client-certificate-data: $(cat kube-proxy-client.pem | base64 | tr -d '\n')
+    client-key-data: $(cat kube-proxy-client-key.pem | base64 | tr -d '\n')
+contexts:
+- context:
+    cluster: local
+    user: proxy
 EOF

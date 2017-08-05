@@ -27,14 +27,16 @@ Just a WIP... a lot remains to be done.  For now you get:
 * A single etcd member with no persistence (until setup with operator)  
 * A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
 * Kubeconfig files for the hosted cluster administrator and to connect kubelets
+* Flannel and kube-proxy daemon-sets on workers
+* Kube-dns on the first worker joining the cluster
 
 
 Short term TODO:
 * ~~Add KCM/Scheduler to control plane assets~~
-* Connect remote kubelet/kube-proxy
-* Add kube-dns
-* Find a way to make in-cluster client use the API server
-* Use flannel for CNI
+* ~~Connect remote kubelet/kube-proxy~~
+* ~~Add kube-dns~~
+* ~~Find a way to make in-cluster client use the API server~~
+* ~~Use flannel for CNI~~
 
 Longer term TODO:
 * Operator driven deployment
@@ -125,15 +127,26 @@ Environment=KUBELET_IMAGE_TAG=v1.7.2_coreos.0
 Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid --dns=host"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
-  --require-kubeconfig \
+  --allow-privileged --require-kubeconfig  \
   --kubeconfig /etc/kubernetes/tls/kubeconfig-kubelets \
   --hostname-override=${MYIP}
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
 EOF
 
+cat <<EOF> /etc/systemd/system/k8s-socat.service
+[Unit]
+Description=Kubernetes API socat
+[Install]
+WantedBy=multi-user.target
+[Service]
+ExecStartPre=-/usr/bin/ip addr add 10.199.199.199/32 dev lo
+ExecStart=/usr/bin/docker run --rm --net=host \
+    alpine/socat TCP-LISTEN:443,fork,reuseaddr,bind=10.199.199.199 TCP:testjfn.k8s.cloudsys.tmcs:31086
+EOF
+
 systemctl daemon-reload
-systemctl enable kubelet
-systemctl restart kubelet
+systemctl enable kubelet k8s-socat
+systemctl restart kubelet k8s-socat
 ```
 
 

@@ -1,0 +1,70 @@
+kind: DaemonSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: kube-proxy
+  namespace: kube-system
+  labels:
+    k8s-app: kube-proxy
+    tier: node
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kube-proxy
+      tier: node
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        k8s-app: kube-proxy
+        tier: node
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+    spec:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      hostNetwork: true
+      terminationGracePeriodSeconds: 30
+      securityContext: {}
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: kube-proxy
+          command:
+            - ./hyperkube
+            - proxy
+            - '--kubeconfig=/etc/kubernetes/secrets/kubeconfig-proxy'
+            - '--proxy-mode=iptables'
+            - '--hostname-override=$(NODE_NAME)'
+            - '--cluster-cidr=10.2.0.0/16'
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: ssl-certs-host
+              readOnly: true
+              mountPath: /etc/ssl/certs
+            - name: secrets
+              readOnly: true
+              mountPath: /etc/kubernetes/secrets
+          terminationMessagePolicy: File
+          image: 'gcr.io/google_containers/hyperkube:v1.7.2'
+      volumes:
+        - name: ssl-certs-host
+          hostPath:
+            path: /usr/share/ca-certificates
+        - name: secrets
+          secret:
+            secretName: kubeconfig-proxy
+            defaultMode: 420
+      dnsPolicy: ClusterFirst
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  templateGeneration: 1

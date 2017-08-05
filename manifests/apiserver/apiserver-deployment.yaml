@@ -25,7 +25,7 @@ spec:
         - --bind-address=0.0.0.0
         - --secure-port=443
         - --insecure-port=8080
-        - --advertise-address=0.0.0.0
+        - --advertise-address=10.199.199.199
         - --etcd-servers=http://etcd0:2379
         - --etcd-quorum-read=true
         - --storage-backend=etcd3
