@@ -141,6 +141,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume etc-cni,kind=host,source=/etc/cni,readOnly=false \
   --mount volume=etc-cni,target=/etc/cni \
   --dns=host"
+ExecStartPre=-/bin/mkdir -p /etc/cni/net.d
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --allow-privileged --require-kubeconfig  \
