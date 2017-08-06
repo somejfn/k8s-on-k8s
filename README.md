@@ -102,13 +102,27 @@ Trying to connect to the hosted control plane...
 ......AVAILABLE !
 Client Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.1", GitCommit:"1dc5c66f5dd61da08412a74221ecc79208c2165b", GitTreeState:"clean", BuildDate:"2017-07-14T02:00:46Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
 Server Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.2", GitCommit:"922a86cfcd65915a9b2f69f3f193b8907d741d9c", GitTreeState:"clean", BuildDate:"2017-07-21T08:08:00Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
+Deploying child cluster assets
+secret "kubeconfig-proxy" created
+daemonset "kube-proxy" created
+clusterrole "flannel" created
+clusterrolebinding "flannel" created
+serviceaccount "flannel" created
+configmap "kube-flannel-cfg" created
+daemonset "kube-flannel-ds" created
+configmap "kube-dns" created
+deployment "kube-dns" created
+serviceaccount "kube-dns" created
+service "kube-dns" created
 ```
 
 
 Connecting a kubelet manually
 --------------
 
-I.e. on a CoreOS instance:
+Tested on a CoreOS instance
+
+Note: Update the _k8s-socat.service_ unit to point to your API server nodePort
 
 ```
 # mkdir /etc/kubernetes/tls -p
@@ -123,11 +137,16 @@ Description=Kubernetes node agent
 WantedBy=multi-user.target
 [Service]
 Environment=KUBELET_IMAGE_TAG=v1.7.2_coreos.0
-Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid --dns=host"
+Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+  --volume etc-cni,kind=host,source=/etc/cni,readOnly=false \
+  --mount volume=etc-cni,target=/etc/cni \
+  --dns=host"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --allow-privileged --require-kubeconfig  \
   --kubeconfig /etc/kubernetes/tls/kubeconfig-kubelets \
+  --cni-conf-dir=/etc/cni/net.d --network-plugin=cni \
+  --cluster-dns=10.3.0.10 --cluster_domain=cluster.local \
   --hostname-override=${MYIP}
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
 EOF
@@ -140,7 +159,7 @@ WantedBy=multi-user.target
 [Service]
 ExecStartPre=-/usr/bin/ip addr add 10.199.199.199/32 dev lo
 ExecStart=/usr/bin/docker run --rm --net=host \
-    alpine/socat TCP-LISTEN:443,fork,reuseaddr,bind=10.199.199.199 TCP:testjfn.k8s.cloudsys.tmcs:31086
+    alpine/socat TCP-LISTEN:443,fork,reuseaddr,bind=10.199.199.199 TCP:testjfn.k8s.cloudsys.tmcs:30648
 EOF
 
 systemctl daemon-reload

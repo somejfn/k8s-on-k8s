@@ -55,10 +55,10 @@ spec:
           timeoutSeconds: 5
         resources:
           limits:
-            memory: 100Mi
+            memory: 250Mi
           requests:
             cpu: 250m
-            memory: 10Mi
+            memory: 100Mi
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
