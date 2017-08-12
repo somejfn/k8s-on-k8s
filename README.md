@@ -1,14 +1,18 @@
 # k8s-on-k8s
 
-This is a *WIP* I work on in my spare time to make k8s _control plane as a service_ so
-I can easily test new versions and various networking drivers.
+This project aims to build k8s _control planes_ on demand using an existing k8s
+cluster so you can easily test new versions, features or networking drivers without
+having to wait for an installer to support it.
+
+It can also be used for teaching purposes giving every student a control plane
+using as little resources as what a few _hyperkube_ and _etcd_ PODs consume.
 
 
 Theory of operation
 --------------
 
 A _master_ or _infrastructure_ cluster provides control plane as a service to multiple
-cluster administrators by granting each of them a writable access to a namespace.
+delegated cluster administrators by granting each of them a writable namespace.
 
 The Kubernetes _hosted_ control plane is provisioned in that namespace just like any
 common containerized application using deployments, services and ingress native objects.
@@ -17,8 +21,8 @@ The cluster administrator can then connect his worker nodes to that control plan
 and create the necessary RBAC bindings for his consumers with no change to the
 infrastructure cluster.
 
-A basic script creates the control plane for now but later a CRD will define the desired
-control plane and an operator will do the heavy lifting.
+A basic script creates the control plane for now but later a CRD will define the
+desired control plane and an operator will do the heavy lifting.
 
 ![In a picture](docs/k8sonk8s.png)
 
@@ -29,13 +33,13 @@ It's a WIP... a lot remains to be done.  For now you get:
 * A single etcd member with no persistence (until setup with operator)  
 * A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
 * Kubeconfig files for the hosted cluster administrator and to connect kubelets
-* Flannel and kube-proxy daemon-sets on workers
+* Flannel and kube-proxy daemon-sets to be instantiated on workers
 * Kube-dns on the first worker joining the cluster
 
 Also note this _10.199.199.199_ IP advertised in the API server manifest and setup
 locally on each worker's loopback interface as show below.  This is a work around for in-cluster
 clients using the built-in kubernetes service to reach the API server (such as kube-flannel
-and kube-dns PODs) via a nodePort service.      
+and kube-dns PODs) via a nodePort service.
 
 TODO:
 * Replace script  by an operator and TPRs/CRDs
@@ -43,19 +47,19 @@ TODO:
 * Use CoreOS etcd operator with persistent volumes
 * Add mini ELK stack to visualize control plane logs
 * Bridge authn/authz to external source
-* Test with Cilium
+* Test with additional network drivers such as Cilium, Weave and Romana
 
 
-Local Requirements
+Local requirements to deploy _hosted_ control planes
 --------------
 * cfssl
 * kubectl setup with the infrastructure cluster context
 
 
-K8s Infrastructure Requirements
+K8s Infrastructure requirements
 --------------
 * Access to a writable namespace
-* A functionnal ingress controller on the infra cluster
+* A functional ingress controller on the infra cluster
 
 
 Creating the hosted control plane
@@ -166,6 +170,34 @@ EOF
 systemctl daemon-reload
 systemctl enable kubelet k8s-socat
 systemctl restart kubelet k8s-socat
+```
+
+
+Using the _hosted_ cluster resources
+--------------
+
+A _kubeconfig_ file with admin privileges was created under the tls directory.
+
+Use it to perform administrator tasks and to create the additional
+RBAC bindings for the end user (if any but you !)
+
+
+```
+$ kubectl --kubeconfig=tls/kubeconfig get nodes
+NAME            STATUS    AGE       VERSION
+192.168.1.124   Ready     13m       v1.7.2+coreos.0
+192.168.1.125   Ready     13m       v1.7.2+coreos.0
+```
+
+```
+$ kubectl --kubeconfig=tls/kubeconfig get pods -n kube-system -o wide
+NAME                        READY     STATUS    RESTARTS   AGE       IP              NODE
+kube-dns-2177165803-19jgj   3/3       Running   0          3m        10.2.0.2        192.168.1.125
+kube-flannel-ds-29nwm       2/2       Running   1          3m        192.168.1.124   192.168.1.124
+kube-flannel-ds-btlg7       2/2       Running   1          3m        192.168.1.125   192.168.1.125
+kube-proxy-fz6s5            1/1       Running   0          3m        192.168.1.125   192.168.1.125
+kube-proxy-jtfk4            1/1       Running   0          3m        192.168.1.124   192.168.1.124
+
 ```
 
 
