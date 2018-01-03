@@ -9,10 +9,12 @@ spec:
   selector:
     matchLabels:
       k8s-on-k8s: kube-apiserver
+      tier: app
   template:
     metadata:
       labels:
         k8s-on-k8s: kube-apiserver
+        tier: app
     spec:
       containers:
       - command:
@@ -25,27 +27,29 @@ spec:
         - --bind-address=0.0.0.0
         - --secure-port=443
         - --insecure-port=8080
-        - --advertise-address=10.199.199.199
+        - --advertise-address=10.66.171.114
         - --etcd-servers=http://etcd0:2379
-        - --etcd-quorum-read=true
-        - --storage-backend=etcd3
         - --allow-privileged=true
         - --service-cluster-ip-range=10.3.0.0/16
-        - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+        - --admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota
         - --tls-ca-file=/etc/kubernetes/secrets/ca.crt
         - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
         - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
         - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
         - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
         - --client-ca-file=/etc/kubernetes/secrets/ca.crt
-        - --authorization-mode=RBAC
-        - --anonymous-auth=false
+        - --authorization-mode=Node,RBAC
         - --cloud-provider=
         - --audit-log-path=/var/log/kubernetes/kube-apiserver-audit.log
         - --audit-log-maxage=30
         - --audit-log-maxbackup=3
         - --audit-log-maxsize=100
-        image: gcr.io/google_containers/hyperkube:v1.7.2
+        - --requestheader-extra-headers-prefix=X-Remote-Extra-
+        - --requestheader-allowed-names=front-proxy-client
+        - --requestheader-group-headers=X-Remote-Group
+        - --enable-bootstrap-token-auth=true
+        - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+        image: gcr.io/google_containers/hyperkube:v1.9.0
         imagePullPolicy: IfNotPresent
         name: kube-apiserver
         resources: {}

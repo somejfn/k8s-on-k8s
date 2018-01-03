@@ -9,10 +9,12 @@ spec:
   selector:
     matchLabels:
       k8s-on-k8s: kube-controller-manager
+      tier: app
   template:
     metadata:
       labels:
         k8s-on-k8s: kube-controller-manager
+        tier: app
     spec:
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -26,6 +28,9 @@ spec:
           command:
             - ./hyperkube
             - controller-manager
+            - '--controllers=*,bootstrapsigner,tokencleaner'
+            - '--cluster-signing-cert-file=/etc/kubernetes/secrets/ca.crt'
+            - '--cluster-signing-key-file=/etc/kubernetes/secrets/ca.key'
             - '--kubeconfig=/etc/kubernetes/secrets/kubeconfig'
             - '--use-service-account-credentials'
             - '--allocate-node-cidrs=true'
@@ -54,7 +59,7 @@ spec:
               readOnly: true
               mountPath: /etc/ssl/certs
           terminationMessagePolicy: File
-          image: gcr.io/google_containers/hyperkube:v1.7.2
+          image: gcr.io/google_containers/hyperkube:v1.9.0
       volumes:
         - name: secrets
           secret:

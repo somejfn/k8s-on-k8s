@@ -21,18 +21,18 @@ The cluster administrator can then connect his worker nodes to that control plan
 and create the necessary RBAC bindings for his consumers with no change to the
 infrastructure cluster.
 
-A basic script creates the control plane for now but later a CRD will define the
-desired control plane and an operator will do the heavy lifting.
+A basic script creates the control plane in a *kubeadm* compatible way, in the sense
+you can use kubeadm to manage tokens for workers to join
 
 ![In a picture](docs/k8sonk8s.png)
 
 
 Current state
 --------------
-It's a WIP... a lot remains to be done.  For now you get:
+It's a WIP.
 * A single etcd member with no persistence (until setup with operator)  
 * A k8s control plane with RBAC enabled (API server, controller-manager and scheduler)
-* Kubeconfig files for the hosted cluster administrator and to connect kubelets
+* Kubeconfig files for the hosted cluster administrator
 * Flannel and kube-proxy daemon-sets to be instantiated on workers
 * Kube-dns on the first worker joining the cluster
 
@@ -40,14 +40,6 @@ Also note this _10.199.199.199_ IP advertised in the API server manifest and set
 locally on each worker's loopback interface as show below.  This is a work around for in-cluster
 clients using the built-in kubernetes service to reach the API server (such as kube-flannel
 and kube-dns PODs) via a nodePort service.
-
-TODO:
-* Replace script  by an operator and TPRs/CRDs
-* Store TLS assets as encrypted secrets (requires 1.7 infra cluster)
-* Use CoreOS etcd operator with persistent volumes
-* Add mini ELK stack to visualize control plane logs
-* Bridge authn/authz to external source
-* Test with additional network drivers such as Cilium, Weave and Romana
 
 
 Local requirements to deploy _hosted_ control planes
@@ -105,7 +97,7 @@ Giving a few seconds for the API server to start...
 Trying to connect to the hosted control plane...
 ......AVAILABLE !
 Client Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.1", GitCommit:"1dc5c66f5dd61da08412a74221ecc79208c2165b", GitTreeState:"clean", BuildDate:"2017-07-14T02:00:46Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
-Server Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.2", GitCommit:"922a86cfcd65915a9b2f69f3f193b8907d741d9c", GitTreeState:"clean", BuildDate:"2017-07-21T08:08:00Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"9", GitVersion:"v1.9.0", GitCommit:"925c127ec6b946659ad0fd596fa959be43f0cc05", GitTreeState:"clean", BuildDate:"2017-12-15T20:55:30Z", GoVersion:"go1.9.2", Compiler:"gc", Platform:"linux/amd64"}
 Deploying child cluster assets
 secret "kubeconfig-proxy" created
 daemonset "kube-proxy" created
@@ -121,56 +113,25 @@ service "kube-dns" created
 ```
 
 
-Connecting a kubelet manually
+Prepare the control plane for kubelet bootstraping
+--------------
+```
+docker run -v ${PWD}/tls:/tmp/tls -it jfnadeau/kubeadm:1.9.0 kubeadm alpha phase bootstrap-token cluster-info --kubeconfig /tmp/tls/kubeconfig
+docker run -v ${PWD}/tls:/tmp/tls -it jfnadeau/kubeadm:1.9.0 kubeadm alpha phase bootstrap-token node allow-auto-approve --kubeconfig /tmp/tls/kubeconfig
+docker run -v ${PWD}/tls:/tmp/tls -it jfnadeau/kubeadm:1.9.0 kubeadm alpha phase bootstrap-token node allow-post-csrs --kubeconfig /tmp/tls/kubeconfig
+docker run -v ${PWD}/tls:/tmp/tls -it jfnadeau/kubeadm:1.9.0 kubeadm token create --kubeconfig /tmp/tls/kubeconfig
+5a5312.564acf6a9824ca38    <--- Use this on the workers
+```
+
+Connecting a worker
 --------------
 
-Tested on a CoreOS instance
-
-Note: Update the _k8s-socat.service_ unit to point to your API server nodePort
+Follow the kubeadm installation process for your OS as described https://kubernetes.io/docs/setup/independent/install-kubeadm/
 
 ```
-# mkdir /etc/kubernetes/tls -p
-
---> Upload kubeconfig-kubelets and ca.pem files under /etc/kubernetes/tls
-
-MYIP=$(ip route list scope global | awk '{print $9}')
-cat <<EOF>/etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes node agent
-[Install]
-WantedBy=multi-user.target
-[Service]
-Environment=KUBELET_IMAGE_TAG=v1.7.2_coreos.0
-Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
-  --volume etc-cni,kind=host,source=/etc/cni,readOnly=false \
-  --mount volume=etc-cni,target=/etc/cni \
-  --dns=host"
-ExecStartPre=-/bin/mkdir -p /etc/cni/net.d
-ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
-ExecStart=/usr/lib/coreos/kubelet-wrapper \
-  --allow-privileged --require-kubeconfig  \
-  --kubeconfig /etc/kubernetes/tls/kubeconfig-kubelets \
-  --cni-conf-dir=/etc/cni/net.d --network-plugin=cni \
-  --cluster-dns=10.3.0.10 --cluster_domain=cluster.local \
-  --hostname-override=${MYIP}
-ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
-EOF
-
-cat <<EOF> /etc/systemd/system/k8s-socat.service
-[Unit]
-Description=Kubernetes API socat
-[Install]
-WantedBy=multi-user.target
-[Service]
-ExecStartPre=-/usr/bin/ip addr add 10.199.199.199/32 dev lo
-ExecStart=/usr/bin/docker run --rm --net=host \
-    alpine/socat TCP-LISTEN:443,fork,reuseaddr,bind=10.199.199.199 TCP:testjfn.k8s.cloudsys.tmcs:30648
-EOF
-
-systemctl daemon-reload
-systemctl enable kubelet k8s-socat
-systemctl restart kubelet k8s-socat
+kubeadm join --token 5a5312.564acf6a9824ca38 <master-ip>:443 --discovery-token-unsafe-skip-ca-verification
 ```
+
 
 
 Using the _hosted_ cluster resources
@@ -183,10 +144,9 @@ RBAC bindings for the end user (if any but you !)
 
 
 ```
-$ kubectl --kubeconfig=tls/kubeconfig get nodes
-NAME            STATUS    AGE       VERSION
-192.168.1.124   Ready     13m       v1.7.2+coreos.0
-192.168.1.125   Ready     13m       v1.7.2+coreos.0
+$ kubectl get nodes --kubeconfig=tls/kubeconfig
+NAME      STATUS    AGE       VERSION
+node1     Ready     12m       v1.9.0
 ```
 
 ```

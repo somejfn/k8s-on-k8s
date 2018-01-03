@@ -91,6 +91,7 @@ data:
   apiserver.crt: $(cat kube-apiserver-server.pem | base64 | tr -d '\n')
   apiserver.key: $(cat kube-apiserver-server-key.pem | base64 | tr -d '\n')
   ca.crt: $(cat ca.pem | base64 | tr -d '\n')
+  ca.key: $(cat ca-key.pem | base64 | tr -d '\n')
   etcd-ca.crt: ""
   etcd-client.crt: ""
   etcd-client.key: ""
@@ -163,6 +164,7 @@ metadata:
   name: kube-controller-manager
 data:
   ca.crt: $(cat ca.pem | base64 | tr -d '\n')
+  ca.key: $(cat ca-key.pem | base64 | tr -d '\n')
   service-account.key: $(cat kube-apiserver-server-key.pem | base64 | tr -d '\n')
   kubeconfig: $(cat kubeconfig-kcm | base64 | tr -d '\n')
 type: Opaque

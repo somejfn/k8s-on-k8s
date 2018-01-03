@@ -38,8 +38,7 @@ fi
 if host ${APIHOST} 1>/dev/null ; then
   echo "CHECK: API server host ${APIHOST} resolves"
 else
-  echo "Can't resolve ${APIHOST}"
-  exit 1
+  echo "Can't resolve ${APIHOST}... assuming ingress host will get created"
 fi
 
 # Add port if non default
@@ -66,10 +65,10 @@ $(which kubectl) -n ${NAMESPACE} create -f scheduler/
 
 # Check we can connect !
 cd ../
-echo "Giving a few seconds for the API server to start..."
-sleep 5
+echo "Giving a 10 seconds for the API server to start..."
+sleep 10
 echo "Trying to connect to the hosted control plane..."
-for ((i = 0 ; i < 15 ; i++ )); do
+for ((i = 0 ; i < 30 ; i++ )); do
   $(which kubectl) version --kubeconfig=tls/kubeconfig 1>/dev/null 2>/dev/null
   RES=$?
   if [ $RES -eq 0 ]; then
@@ -78,7 +77,7 @@ for ((i = 0 ; i < 15 ; i++ )); do
       break
   fi
   echo -n .
-  sleep 2
+  sleep 5
   [[ $i -eq 15 ]] && echo "Timed out..." && exit 1
 done
 

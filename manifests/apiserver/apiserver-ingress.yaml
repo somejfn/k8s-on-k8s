@@ -3,11 +3,11 @@ kind: Ingress
 metadata:
   annotations:
     ingress.kubernetes.io/ssl-passthrough: "true"
-    kubernetes.io/ingress.class: tectonic
+    kubernetes.io/ingress.class: shared-nginx
   name: k8s-on-k8s
 spec:
   rules:
-  - host: testjfn.k8s.cloudsys.tmcs
+  - host: k8s.foo.somedomain.edu
     http:
       paths:
       - backend:
@@ -15,4 +15,4 @@ spec:
           servicePort: 443
   tls:
   - hosts:
-    - testjfn.k8s.cloudsys.tmcs
+    - k8s.foo.somedomain.edu

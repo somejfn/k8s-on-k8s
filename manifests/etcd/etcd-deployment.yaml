@@ -7,10 +7,12 @@ spec:
   selector:
     matchLabels:
       k8s-on-k8s: etcd
+      tier: app
   template:
     metadata:
       labels:
         k8s-on-k8s: etcd
+        tier: app
     spec:
       hostname: etcd0
       containers:
